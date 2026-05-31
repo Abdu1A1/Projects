@@ -19,7 +19,7 @@ import {
   LayoutDashboard,
   Library,
   FolderOpen,
-  Upload,
+  Camera,
   LogOut,
   Menu,
   Moon,
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UploadModal } from '@/components/upload/UploadModal';
+import { ReceiptPDFExport } from '@/components/receipts/ReceiptPDFExport';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -104,6 +105,9 @@ export function AppLayout({ children, userEmail }: AppLayoutProps) {
             <Download className="w-4 h-4" />
             Export CSV
           </Button>
+          <div className="px-3">
+            <ReceiptPDFExport />
+          </div>
 
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2 min-w-0">
@@ -198,18 +202,21 @@ export function AppLayout({ children, userEmail }: AppLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="lg:pl-64 min-h-screen">
+      <main className="lg:pl-64 min-h-screen pb-24 lg:pb-0">
         <div className="pt-16 lg:pt-0">{children}</div>
       </main>
 
-      {/* Mobile Camera FAB */}
-      <button
-        onClick={() => setUploadOpen(true)}
-        className="lg:hidden fixed bottom-6 right-6 w-16 h-16 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-xl flex items-center justify-center z-50 transition-transform hover:scale-105 active:scale-95"
-        aria-label="Add receipt"
-      >
-        <Upload className="w-7 h-7" />
-      </button>
+      {/* Mobile Camera CTA — centered bottom */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-t from-gray-50 via-gray-50/95 to-transparent dark:from-gray-950 dark:via-gray-950/95 pointer-events-none">
+        <button
+          onClick={() => setUploadOpen(true)}
+          className="pointer-events-auto w-full max-w-sm mx-auto flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl py-4 px-6 shadow-xl transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          aria-label="Add receipt"
+        >
+          <Camera className="w-6 h-6" />
+          <span className="font-semibold text-base">Snap Receipt</span>
+        </button>
+      </div>
 
       {/* Desktop Upload button */}
       <div className="hidden lg:block fixed bottom-8 left-72 z-30">
@@ -217,7 +224,7 @@ export function AppLayout({ children, userEmail }: AppLayoutProps) {
           onClick={() => setUploadOpen(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg gap-2 px-5 py-2.5 rounded-xl h-auto"
         >
-          <Upload className="w-4 h-4" />
+          <Camera className="w-4 h-4" />
           Add Receipt
         </Button>
       </div>

@@ -29,7 +29,7 @@ export default function LandingPage() {
       <section className="max-w-6xl mx-auto px-4 pt-20 pb-24 text-center">
         <div className="inline-flex items-center gap-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
           <Zap className="w-4 h-4" />
-          Powered by Claude AI
+          Powered by Gemini AI
         </div>
         <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight">
           Never lose a receipt
@@ -61,7 +61,7 @@ export default function LandingPage() {
             {
               icon: Scan,
               title: 'AI-Powered OCR',
-              description: 'Claude AI extracts merchant, total, tax, line items, and more — instantly from any receipt photo.',
+              description: 'Google Gemini AI extracts merchant, total, tax, line items, and more — instantly from any receipt photo.',
               color: 'text-indigo-600',
               bg: 'bg-indigo-100 dark:bg-indigo-900/30',
             },
@@ -126,7 +126,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="border-t border-gray-200 dark:border-gray-800 py-8 text-center text-sm text-gray-500">
-        <p>© 2026 ReceiptAI. Built with Next.js, Supabase, and Claude AI.</p>
+        <p>© 2026 ReceiptAI. Built with Next.js, Supabase, and Google Gemini.</p>
       </footer>
     </div>
   );

@@ -1,9 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { ClaudeExtraction, CATEGORIES } from '@/types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiExtraction, CATEGORIES, FlagType } from '@/types';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
 
 const SYSTEM_PROMPT = `You are a receipt parser. Extract all data from the receipt image and return ONLY valid JSON with this exact structure. Never add explanation. If a field is unreadable return null. Never guess totals.
 
@@ -39,79 +37,84 @@ Category rules:
 - Uber, Lyft, Airbnb → Travel
 - Tim Hortons, McDonald's, Subway → Restaurant`;
 
-export async function parseReceiptWithClaude(
-  imageUrl: string,
-  userCorrections?: Array<{ merchant: string; original_category: string; corrected_category: string }>
-): Promise<ClaudeExtraction> {
-  let systemPrompt = SYSTEM_PROMPT;
+const VALID_FLAGS: FlagType[] = [
+  'high_tax',
+  'possible_duplicate',
+  'refund_detected',
+  'missing_total',
+  'suspicious_charge',
+  'low_confidence',
+];
 
+function buildPrompt(
+  userCorrections?: Array<{ merchant: string; original_category: string; corrected_category: string }>
+): string {
+  let prompt = SYSTEM_PROMPT;
   if (userCorrections && userCorrections.length > 0) {
     const correctionExamples = userCorrections
       .slice(0, 5)
       .map((c) => `- ${c.merchant}: was "${c.original_category}", correct category is "${c.corrected_category}"`)
       .join('\n');
-    systemPrompt += `\n\nUser's past corrections (apply these patterns):\n${correctionExamples}`;
+    prompt += `\n\nUser's past corrections (apply these patterns):\n${correctionExamples}`;
   }
+  return prompt;
+}
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 2048,
-    system: systemPrompt,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: 'url',
-              url: imageUrl,
-            },
-          },
-          {
-            type: 'text',
-            text: 'Extract all receipt data and return as JSON only.',
-          },
-        ],
-      },
-    ],
-  });
-
-  const content = response.content[0];
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Claude');
-  }
-
-  // Extract JSON from response (handle markdown code blocks)
-  let jsonStr = content.text.trim();
+function parseGeminiJson(text: string): GeminiExtraction {
+  let jsonStr = text.trim();
   const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (jsonMatch) {
     jsonStr = jsonMatch[1].trim();
   }
 
-  const parsed = JSON.parse(jsonStr) as ClaudeExtraction;
+  const parsed = JSON.parse(jsonStr) as GeminiExtraction;
 
-  // Validate category
-  if (parsed.category && !CATEGORIES.includes(parsed.category as typeof CATEGORIES[number])) {
+  if (parsed.category && !CATEGORIES.includes(parsed.category as (typeof CATEGORIES)[number])) {
     parsed.category = 'Other';
   }
 
-  // Ensure confidence is between 0 and 1
   if (typeof parsed.confidence !== 'number') {
     parsed.confidence = 0;
   }
   parsed.confidence = Math.max(0, Math.min(1, parsed.confidence));
 
-  // Validate flags
-  const validFlags = ['high_tax', 'possible_duplicate', 'refund_detected', 'missing_total', 'suspicious_charge', 'low_confidence'];
-  parsed.flags = (parsed.flags || []).filter((f) => validFlags.includes(f));
+  parsed.flags = (parsed.flags || []).filter((f) => VALID_FLAGS.includes(f as FlagType)) as FlagType[];
 
-  // Add low_confidence flag if confidence is below threshold
   if (parsed.confidence < 0.7 && !parsed.flags.includes('low_confidence')) {
     parsed.flags.push('low_confidence');
   }
 
+  if (parsed.total == null && !parsed.flags.includes('missing_total')) {
+    parsed.flags.push('missing_total');
+  }
+
   return parsed;
+}
+
+export async function parseReceiptWithGemini(
+  imageBuffer: Buffer,
+  mimeType: string,
+  userCorrections?: Array<{ merchant: string; original_category: string; corrected_category: string }>
+): Promise<GeminiExtraction> {
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    systemInstruction: buildPrompt(userCorrections),
+  });
+
+  const base64Data = imageBuffer.toString('base64');
+
+  const result = await model.generateContent([
+    {
+      inlineData: {
+        mimeType,
+        data: base64Data,
+      },
+    },
+    { text: 'Extract all receipt data and return as JSON only.' },
+  ]);
+
+  const text = result.response.text();
+  return parseGeminiJson(text);
 }
 
 export async function generateMonthlySummary(data: {
@@ -121,21 +124,14 @@ export async function generateMonthlySummary(data: {
   topMerchant: string;
   month: string;
 }): Promise<string> {
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 256,
-    messages: [
-      {
-        role: 'user',
-        content: `Generate a 2-3 sentence plain English spending summary for ${data.month}. 
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+  const result = await model.generateContent(
+    `Generate a 2-3 sentence plain English spending summary for ${data.month}. 
 Total spent: $${data.totalSpent.toFixed(2)} across ${data.receiptCount} receipts. 
 Top category: ${data.topCategory}. Top merchant: ${data.topMerchant}.
-Be concise and friendly. Just the summary, no extra text.`,
-      },
-    ],
-  });
+Be concise and friendly. Just the summary, no extra text.`
+  );
 
-  const content = response.content[0];
-  if (content.type !== 'text') return '';
-  return content.text.trim();
+  return result.response.text().trim();
 }

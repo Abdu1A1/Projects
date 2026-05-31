@@ -66,7 +66,7 @@ export interface ReceiptWithDetails extends Receipt {
   tags: Tag[];
 }
 
-export interface ClaudeExtraction {
+export interface GeminiExtraction {
   merchant: string | null;
   date: string | null;
   time: string | null;
