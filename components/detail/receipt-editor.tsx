@@ -98,7 +98,7 @@ export function ReceiptEditor({ receipt, lineItems, tags, duplicate }: Props) {
     <div className="space-y-6">
       {lowConfidence && (
         <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-yellow-800 dark:border-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
-          AI wasn't confident — please review this receipt.
+          AI wasn&apos;t confident — please review this receipt.
         </div>
       )}
 

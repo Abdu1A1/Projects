@@ -188,13 +188,15 @@ export function buildDashboardMetrics(receipts: Receipt[]): DashboardMetrics {
     merchantMap.set(key, (merchantMap.get(key) ?? 0) + (receipt.total ?? 0));
   });
 
-  const topCategory = [...categoryMap.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "None";
+  const topCategory =
+    Array.from(categoryMap.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ??
+    "None";
 
-  const spendByCategory = [...categoryMap.entries()]
+  const spendByCategory = Array.from(categoryMap.entries())
     .map(([category, total]) => ({ category, total }))
     .sort((a, b) => b.total - a.total);
 
-  const topMerchants = [...merchantMap.entries()]
+  const topMerchants = Array.from(merchantMap.entries())
     .map(([merchant, total]) => ({ merchant, total }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
@@ -253,5 +255,7 @@ export function groupReceiptsByMerchant(receipts: Receipt[]) {
     grouped.set(merchant, list);
   });
 
-  return [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  return Array.from(grouped.entries()).sort((a, b) =>
+    a[0].localeCompare(b[0]),
+  );
 }

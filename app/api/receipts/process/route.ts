@@ -96,7 +96,7 @@ export async function POST(request: Request) {
           payment_method: extraction.parsed.payment_method,
           category: extraction.parsed.category,
           summary: extraction.parsed.summary,
-          flags: [...flags],
+          flags: Array.from(flags),
           confidence: extraction.parsed.confidence,
         })
         .select("id")

@@ -11,7 +11,7 @@ export async function loginAction(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message };
+    redirect(`/login?error=${encodeURIComponent(error.message)}`);
   }
 
   redirect("/dashboard");
@@ -32,13 +32,13 @@ export async function signupAction(formData: FormData) {
   });
 
   if (error) {
-    return { error: error.message };
+    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
   }
 
   redirect("/dashboard");
 }
 
-export async function signInWithGoogleAction() {
+export async function signInWithGoogleAction(_formData: FormData) {
   const supabase = createClient();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -49,7 +49,9 @@ export async function signInWithGoogleAction() {
   });
 
   if (error || !data.url) {
-    return { error: error?.message || "Unable to continue with Google" };
+    redirect(
+      `/login?error=${encodeURIComponent(error?.message || "Unable to continue with Google")}`,
+    );
   }
 
   redirect(data.url);
