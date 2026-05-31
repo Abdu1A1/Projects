@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Chrome, Mail } from "lucide-react";
+import { Globe, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -96,7 +96,7 @@ export function AuthForm() {
         </Button>
 
         <Button className="w-full" variant="outline" onClick={handleGoogleAuth} type="button">
-          <Chrome className="h-4 w-4" />
+          <Globe className="h-4 w-4" />
           Continue with Google
         </Button>
 

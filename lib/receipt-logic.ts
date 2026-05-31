@@ -191,7 +191,6 @@ export function computeDashboardStats(receipts: Receipt[]): DashboardStats {
   const now = new Date();
   const thisMonthStart = startOfMonth(now);
   const thisMonthEnd = endOfMonth(now);
-  const thirtyDaysAgo = subDays(now, 29);
   const oneWeekAgo = subDays(now, 6);
 
   const thisMonth = receipts.filter((receipt) => {

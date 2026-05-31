@@ -5,7 +5,19 @@ import { demoCategories, demoCorrections, demoReceipts } from "@/lib/mock-data";
 import { extractQueryHints } from "@/lib/search";
 import type { Category, DashboardStats, FolderGroup, Receipt, ReceiptExtraction, ReceiptFilters } from "@/lib/types";
 
-function mapReceiptRow(row: any): Receipt {
+type ReceiptRow = Omit<Receipt, "line_items" | "tags" | "flags"> & {
+  flags?: Receipt["flags"];
+  line_items?: Receipt["line_items"];
+  tags?: Receipt["tags"];
+};
+
+type LineItemInput = {
+  name: string;
+  qty: number | null;
+  price: number | null;
+};
+
+function mapReceiptRow(row: ReceiptRow): Receipt {
   return {
     ...row,
     flags: row.flags || [],
@@ -83,7 +95,7 @@ export async function getReceipts(userId: string, filters: ReceiptFilters = {}):
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data || []).map(mapReceiptRow);
+  return (data || []).map((row) => mapReceiptRow(row as unknown as ReceiptRow));
 }
 
 export async function getReceipt(userId: string, receiptId: string): Promise<Receipt | null> {
@@ -106,7 +118,7 @@ export async function getReceipt(userId: string, receiptId: string): Promise<Rec
     throw error;
   }
 
-  return mapReceiptRow(data);
+  return mapReceiptRow(data as unknown as ReceiptRow);
 }
 
 export async function getDuplicateReceipt(userId: string, receiptId: string) {
@@ -272,8 +284,9 @@ export async function updateReceipt(args: {
     const { error: deleteError } = await supabase.from("line_items").delete().eq("receipt_id", args.receiptId);
     if (deleteError) throw deleteError;
     if (line_items.length) {
+      const nextLineItems = line_items as LineItemInput[];
       const { error: insertError } = await supabase.from("line_items").insert(
-        line_items.map((item: any) => ({ receipt_id: args.receiptId, name: item.name, qty: item.qty, price: item.price })),
+        nextLineItems.map((item) => ({ receipt_id: args.receiptId, name: item.name, qty: item.qty, price: item.price })),
       );
       if (insertError) throw insertError;
     }

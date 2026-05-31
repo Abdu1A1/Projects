@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Receipt, ShieldCheck, Sparkles } from "lucide-react";
 import { AuthForm } from "@/components/app/auth-form";
 
@@ -35,7 +36,9 @@ export default function LoginPage() {
             })}
           </div>
         </div>
-        <AuthForm />
+        <Suspense fallback={<div className="rounded-[1.5rem] border border-border/60 bg-card p-8 text-sm text-muted-foreground">Loading authentication…</div>}>
+          <AuthForm />
+        </Suspense>
       </div>
     </div>
   );

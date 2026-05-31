@@ -4,7 +4,7 @@ import { CLAUDE_MODEL } from "@/lib/constants";
 import { hasAnthropicEnv } from "@/lib/env";
 import { fallbackExtraction, buildFewShotExamples, buildMonthlySummaryPrompt, fallbackMonthlySummary, RECEIPT_SYSTEM_PROMPT, stripJsonFence } from "@/lib/prompts";
 import { buildMonthLabel, normalizeExtraction } from "@/lib/receipt-logic";
-import type { MonthlySummary, Receipt, ReceiptExtraction } from "@/lib/types";
+import type { MonthlySummary, Receipt } from "@/lib/types";
 import { receiptExtractionSchema } from "@/lib/validators";
 
 let anthropicClient: Anthropic | null = null;

@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from "cloudinary";
+import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 import { hasCloudinaryEnv } from "@/lib/env";
 
 let configured = false;
@@ -33,7 +33,7 @@ export async function uploadReceiptAsset(file: File, userId: string) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const result = await new Promise<any>((resolve, reject) => {
+  const result = await new Promise<UploadApiResponse>((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: `receiptai/${userId}`,
@@ -69,8 +69,8 @@ export async function uploadReceiptAsset(file: File, userId: string) {
       });
 
   return {
-    imageUrl: result.secure_url as string,
+    imageUrl: result.secure_url,
     aiUrl,
-    publicId: result.public_id as string,
+    publicId: result.public_id,
   };
 }

@@ -12,6 +12,8 @@ import { formatCurrency } from "@/lib/format";
 import type { DashboardStats, MonthlySummary, Receipt as ReceiptType } from "@/lib/types";
 
 const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+const tooltipCurrency = (value?: string | number | readonly (string | number)[]) =>
+  formatCurrency(Number(Array.isArray(value) ? value[0] : value ?? 0));
 
 export function DashboardPage({ receipts, stats, monthlySummary }: { receipts: ReceiptType[]; stats: DashboardStats; monthlySummary: MonthlySummary }) {
   const recentReceipts = useMemo(() => receipts.slice(0, 4), [receipts]);
@@ -90,7 +92,7 @@ export function DashboardPage({ receipts, stats, monthlySummary }: { receipts: R
                     <Cell fill={chartColors[index % chartColors.length]} key={entry.name} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip formatter={tooltipCurrency} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -106,7 +108,7 @@ export function DashboardPage({ receipts, stats, monthlySummary }: { receipts: R
               <LineChart data={stats.lineData}>
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={4} />
                 <YAxis tickFormatter={(value) => `${value}`} tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip formatter={tooltipCurrency} />
                 <Line dataKey="total" stroke="hsl(var(--chart-1))" strokeWidth={3} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -123,7 +125,7 @@ export function DashboardPage({ receipts, stats, monthlySummary }: { receipts: R
               <BarChart data={stats.merchantData} layout="vertical">
                 <XAxis type="number" hide />
                 <YAxis dataKey="merchant" tick={{ fontSize: 12 }} type="category" width={90} />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip formatter={tooltipCurrency} />
                 <Bar dataKey="total" fill="hsl(var(--chart-2))" radius={[8, 8, 8, 8]} />
               </BarChart>
             </ResponsiveContainer>

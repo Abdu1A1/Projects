@@ -118,7 +118,7 @@ export let demoReceipts: Receipt[] = [
   },
 ];
 
-export let demoCorrections: Array<{
+export const demoCorrections: Array<{
   id: string;
   user_id: string;
   merchant: string | null;
