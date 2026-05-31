@@ -100,12 +100,41 @@ begin
 end;
 $$ language plpgsql;
 
+-- Function to refresh search vector on parent receipt
+create or replace function refresh_receipt_search_vector(receipt_id_val uuid)
+returns void as $$
+declare
+  line_names text;
+  tag_labels text;
+  r record;
+begin
+  select * into r from public.receipts where id = receipt_id_val;
+  if not found then return; end if;
+
+  select coalesce(string_agg(name, ' '), '') into line_names
+  from public.line_items where receipt_id = receipt_id_val;
+
+  select coalesce(string_agg(label, ' '), '') into tag_labels
+  from public.tags where receipt_id = receipt_id_val;
+
+  update public.receipts
+  set search_vector = to_tsvector('english',
+    coalesce(r.merchant, '') || ' ' ||
+    coalesce(r.category, '') || ' ' ||
+    coalesce(r.summary, '') || ' ' ||
+    coalesce(line_names, '') || ' ' ||
+    coalesce(tag_labels, '')
+  )
+  where id = receipt_id_val;
+end;
+$$ language plpgsql;
+
 -- Trigger to auto-update search_vector on receipts
 create or replace trigger receipts_search_vector_update
 before insert or update on public.receipts
 for each row execute function update_receipt_search_vector();
 
--- Function to update search vector when line_items change
+-- Refresh search vector when line_items change
 create or replace function update_receipt_search_on_line_item_change()
 returns trigger as $$
 declare
@@ -117,13 +146,37 @@ begin
     receipt_id_val := NEW.receipt_id;
   end if;
 
-  update public.receipts
-  set updated_at = now()
-  where id = receipt_id_val;
-
-  return NEW;
+  perform refresh_receipt_search_vector(receipt_id_val);
+  return coalesce(NEW, OLD);
 end;
 $$ language plpgsql;
+
+drop trigger if exists line_items_search_vector_update on public.line_items;
+create trigger line_items_search_vector_update
+after insert or update or delete on public.line_items
+for each row execute function update_receipt_search_on_line_item_change();
+
+-- Refresh search vector when tags change
+create or replace function update_receipt_search_on_tag_change()
+returns trigger as $$
+declare
+  receipt_id_val uuid;
+begin
+  if TG_OP = 'DELETE' then
+    receipt_id_val := OLD.receipt_id;
+  else
+    receipt_id_val := NEW.receipt_id;
+  end if;
+
+  perform refresh_receipt_search_vector(receipt_id_val);
+  return coalesce(NEW, OLD);
+end;
+$$ language plpgsql;
+
+drop trigger if exists tags_search_vector_update on public.tags;
+create trigger tags_search_vector_update
+after insert or update or delete on public.tags
+for each row execute function update_receipt_search_on_tag_change();
 
 -- Add updated_at to receipts if not exists
 alter table public.receipts add column if not exists updated_at timestamptz default now();
@@ -220,3 +273,30 @@ begin
   on conflict do nothing;
 end;
 $$ language plpgsql security definer;
+
+-- Supabase Storage bucket for receipt images
+insert into storage.buckets (id, name, public)
+values ('receipts', 'receipts', true)
+on conflict (id) do nothing;
+
+-- Storage policies: users can only access their own folder (user_id as first path segment)
+create policy "Users can upload their own receipt images"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'receipts'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+create policy "Users can view their own receipt images"
+  on storage.objects for select
+  using (
+    bucket_id = 'receipts'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+create policy "Users can delete their own receipt images"
+  on storage.objects for delete
+  using (
+    bucket_id = 'receipts'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

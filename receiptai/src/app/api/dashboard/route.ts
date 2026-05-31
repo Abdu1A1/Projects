@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { generateMonthlySummary } from '@/lib/claude';
+import { generateMonthlySummary } from '@/lib/gemini';
+
+export const dynamic = 'force-dynamic';
 import { format, startOfMonth, endOfMonth, startOfWeek, subDays } from 'date-fns';
 
 export async function GET() {

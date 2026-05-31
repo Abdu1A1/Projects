@@ -4,6 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { ReceiptWithDetails, CATEGORIES, FlagType, CATEGORY_COLORS } from '@/types';
 import { FlagBadge } from '@/components/receipts/FlagBadge';
+import { CompareModal } from '@/components/receipts/CompareModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import {
   X,
   Loader2,
   CheckCircle,
+  GitCompare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -82,6 +84,7 @@ export default function ReceiptDetailPage({ params }: { params: Promise<{ id: st
   const [deleting, setDeleting] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [savingCategory, setSavingCategory] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/receipts/${id}`)
@@ -371,13 +374,26 @@ export default function ReceiptDetailPage({ params }: { params: Promise<{ id: st
           {flags.length > 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">
               <Label className="text-xs text-gray-500 uppercase tracking-wide">Flags</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap items-center gap-2 mt-2">
                 {flags.map((flag) => (
                   <FlagBadge key={flag} flag={flag} size="md" />
                 ))}
+                {flags.includes('possible_duplicate') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 h-7 text-xs"
+                    onClick={() => setCompareOpen(true)}
+                  >
+                    <GitCompare className="w-3.5 h-3.5" />
+                    Compare
+                  </Button>
+                )}
               </div>
             </div>
           )}
+
+          <CompareModal receiptId={id} open={compareOpen} onClose={() => setCompareOpen(false)} />
 
           {/* Tags */}
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5">

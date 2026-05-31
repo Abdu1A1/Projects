@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { deleteReceiptImage } from '@/lib/cloudinary';
+import { deleteReceiptImage } from '@/lib/storage';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
@@ -49,7 +51,6 @@ export async function PATCH(
     const body = await request.json();
     const { line_items, tags, original_category, ...receiptFields } = body;
 
-    // Update receipt fields
     if (Object.keys(receiptFields).length > 0) {
       const { error } = await supabase
         .from('receipts')
@@ -60,7 +61,6 @@ export async function PATCH(
       if (error) throw error;
     }
 
-    // Store correction for few-shot prompting if category was changed
     if (receiptFields.category && original_category && receiptFields.category !== original_category) {
       const { data: receipt } = await supabase
         .from('receipts')
@@ -78,7 +78,6 @@ export async function PATCH(
       }
     }
 
-    // Update line items if provided
     if (line_items !== undefined) {
       await supabase.from('line_items').delete().eq('receipt_id', id);
       if (line_items.length > 0) {
@@ -91,7 +90,6 @@ export async function PATCH(
       }
     }
 
-    // Update tags if provided
     if (tags !== undefined) {
       await supabase.from('tags').delete().eq('receipt_id', id);
       if (tags.length > 0) {
@@ -130,7 +128,6 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get image URL before deletion
     const { data: receipt } = await supabase
       .from('receipts')
       .select('image_url')
@@ -138,7 +135,6 @@ export async function DELETE(
       .eq('user_id', user.id)
       .single();
 
-    // Delete from database (cascades to line_items and tags)
     const { error } = await supabase
       .from('receipts')
       .delete()
@@ -147,9 +143,8 @@ export async function DELETE(
 
     if (error) throw error;
 
-    // Delete from Cloudinary
     if (receipt?.image_url) {
-      await deleteReceiptImage(receipt.image_url);
+      await deleteReceiptImage(supabase, receipt.image_url);
     }
 
     return NextResponse.json({ success: true });
