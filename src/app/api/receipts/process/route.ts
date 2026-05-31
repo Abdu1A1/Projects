@@ -16,6 +16,7 @@ function buildFlags(args: {
   possibleDuplicate: boolean;
 }) {
   const flags = new Set(args.extractedFlags);
+  const normalizedTotal = args.total;
 
   if (args.total === null) {
     flags.add("missing_total");
@@ -33,9 +34,9 @@ function buildFlags(args: {
   }
 
   if (
-    typeof args.total === "number" &&
-    args.total !== 0 &&
-    args.lineItems.some((item) => (item.price ?? 0) * (item.qty ?? 1) > Math.abs(args.total) * 0.8)
+    typeof normalizedTotal === "number" &&
+    normalizedTotal !== 0 &&
+    args.lineItems.some((item) => (item.price ?? 0) * (item.qty ?? 1) > Math.abs(normalizedTotal) * 0.8)
   ) {
     flags.add("suspicious_charge");
   }

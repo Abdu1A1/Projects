@@ -21,6 +21,13 @@ import { formatCurrency } from "@/lib/utils";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
+function formatTooltipValue(
+  value: number | string | Array<number | string> | ReadonlyArray<number | string> | undefined,
+) {
+  const normalized = Array.isArray(value) ? Number(value[0]) : Number(value);
+  return formatCurrency(Number.isFinite(normalized) ? normalized : 0);
+}
+
 export function DashboardCharts({
   donutData,
   lineData,
@@ -44,7 +51,7 @@ export function DashboardCharts({
                   <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={formatTooltipValue} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -61,7 +68,7 @@ export function DashboardCharts({
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis dataKey="date" minTickGap={24} />
               <YAxis />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={formatTooltipValue} />
               <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={3} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -78,7 +85,7 @@ export function DashboardCharts({
               <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
               <XAxis dataKey="merchant" />
               <YAxis />
-              <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip formatter={formatTooltipValue} />
               <Bar dataKey="total" radius={[12, 12, 0, 0]}>
                 {barData.map((entry, index) => (
                   <Cell key={entry.merchant} fill={COLORS[index % COLORS.length]} />

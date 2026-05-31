@@ -64,7 +64,7 @@ export async function signupAction(
 
 export async function signInWithGoogleAction() {
   if (!hasRequiredSupabaseEnv()) {
-    return { error: "Supabase environment variables are missing." };
+    redirect("/login");
   }
 
   const supabase = createSupabaseServerClient();
@@ -76,7 +76,7 @@ export async function signInWithGoogleAction() {
   });
 
   if (error) {
-    return { error: error.message };
+    redirect("/login");
   }
 
   redirect(data.url);
@@ -96,7 +96,7 @@ export async function createCustomCategoryAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
 
   if (!name) {
-    return { error: "Category name is required." };
+    return;
   }
 
   await addCustomCategory(user.id, name);
@@ -104,6 +104,4 @@ export async function createCustomCategoryAction(formData: FormData) {
   revalidatePath("/archive");
   revalidatePath("/library");
   revalidatePath(`/receipts`);
-
-  return { success: true };
 }

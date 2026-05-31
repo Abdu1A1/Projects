@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 
+import { hasRequiredSupabaseEnv } from "@/lib/env";
 import { generateReceiptCsv } from "@/lib/export";
 import { parseSearchFilters } from "@/lib/query-parser";
 import { getReceipts } from "@/lib/receipt-service";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  if (!hasRequiredSupabaseEnv()) {
+    return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
+  }
+
   const supabase = createSupabaseServerClient();
   const {
     data: { user },
