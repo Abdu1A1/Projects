@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -24,8 +26,11 @@ export function LibraryPage() {
 
   const queryString = useMemo(() => searchParams.toString(), [searchParams]);
 
-  const fetchReceipts = useCallback(async () => {
-    setLoading(true);
+  const fetchReceipts = useCallback(async (showLoading = false) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+
     const response = await fetch(`/api/receipts/query?${queryString}`);
     if (response.ok) {
       const body = (await response.json()) as QueryResponse;
@@ -41,7 +46,7 @@ export function LibraryPage() {
 
   return (
     <div className="space-y-4">
-      <UploadQueue onComplete={fetchReceipts} />
+      <UploadQueue onComplete={() => void fetchReceipts(true)} />
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">

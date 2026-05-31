@@ -10,9 +10,8 @@ import type { ReceiptRecord } from "@/types/receipt";
 const palette = ["#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc", "#bae6fd"];
 
 export function DashboardView({ receipts, summary }: { receipts: ReceiptRecord[]; summary: string }) {
-  const now = new Date();
-
   const stats = useMemo(() => {
+    const now = new Date();
     const thisMonth = receipts.filter((receipt) => {
       if (!receipt.date) return false;
       const date = new Date(`${receipt.date}T00:00:00`);
@@ -72,7 +71,7 @@ export function DashboardView({ receipts, summary }: { receipts: ReceiptRecord[]
       dailyData,
       merchantData,
     };
-  }, [receipts, now]);
+  }, [receipts]);
 
   return (
     <div className="space-y-6">
